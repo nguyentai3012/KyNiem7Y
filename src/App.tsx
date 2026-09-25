@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import confetti from 'canvas-confetti';
 import {
   CalendarDays,
@@ -8,18 +8,9 @@ import {
   Pause,
   Play,
   Sparkles,
-  UploadCloud,
 } from 'lucide-react';
 import { anniversaryConfig } from './data/siteConfig';
 import { audioService } from './utils/audio';
-import { getAllPhotos, savePhoto } from './utils/photoStorage';
-
-const LEGACY_PHOTO_KEYS: Record<string, string> = {
-  '2019': 'photo_1',
-  '2021': 'photo_2',
-  '2022': 'photo_4',
-  '2025': 'photo_5',
-};
 
 function getElapsed() {
   const start = new Date(anniversaryConfig.startDate).getTime();
@@ -28,54 +19,6 @@ function getElapsed() {
   const days = Math.floor(diff / 86_400_000);
   const hours = Math.floor(diff / 3_600_000);
   return { days, hours };
-}
-
-function compressImage(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-
-    reader.onload = (event) => {
-      const source = event.target?.result;
-      if (typeof source !== 'string') {
-        reject(new Error('Unable to read image'));
-        return;
-      }
-
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const maxDim = 1800;
-        let width = img.width;
-        let height = img.height;
-
-        if (width > height && width > maxDim) {
-          height = Math.round((height * maxDim) / width);
-          width = maxDim;
-        } else if (height >= width && height > maxDim) {
-          width = Math.round((width * maxDim) / height);
-          height = maxDim;
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          resolve(source);
-          return;
-        }
-
-        ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', 0.9));
-      };
-
-      img.onerror = () => reject(new Error('Unable to decode image'));
-      img.src = source;
-    };
-
-    reader.onerror = () => reject(reader.error ?? new Error('Unable to read image'));
-    reader.readAsDataURL(file);
-  });
 }
 
 function MemoryImage({
@@ -110,26 +53,10 @@ export default function App() {
   const [opened, setOpened] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [answered, setAnswered] = useState(false);
-  const [photoData, setPhotoData] = useState<Record<string, string>>({});
-  const [uploadingYear, setUploadingYear] = useState<string | null>(null);
-  const uploadInputRef = useRef<HTMLInputElement>(null);
-  const uploadTargetYearRef = useRef<string | null>(null);
   const elapsed = useMemo(() => getElapsed(), []);
 
   useEffect(() => {
-    let mounted = true;
-
-    getAllPhotos()
-      .then((photos) => {
-        if (mounted) setPhotoData(photos);
-      })
-      .catch((error) => {
-        console.error('Failed to load saved anniversary photos', error);
-      });
-
-    return () => {
-      mounted = false;
-    };
+    audioService.setCustomAudioUrl(anniversaryConfig.songUrl);
   }, []);
 
   const toggleMusic = async () => {
@@ -156,51 +83,6 @@ export default function App() {
       origin: { y: 0.72 },
       colors: ['#f4b6c2', '#f7d9df', '#f6e7c1', '#ffffff'],
     });
-  };
-
-  const triggerMemoryUpload = (year: string) => {
-    uploadTargetYearRef.current = year;
-    uploadInputRef.current?.click();
-  };
-
-  const handleMemoryUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    const year = uploadTargetYearRef.current;
-
-    if (!file || !year) return;
-
-    setUploadingYear(year);
-
-    try {
-      const compressed = await compressImage(file);
-      const storageKey = `memory_${year}`;
-
-      await savePhoto(storageKey, compressed);
-      setPhotoData((previous) => ({
-        ...previous,
-        [storageKey]: compressed,
-      }));
-
-      confetti({
-        particleCount: 28,
-        spread: 55,
-        origin: { y: 0.55 },
-        colors: ['#f4b6c2', '#f7d9df', '#f6e7c1', '#ffffff'],
-      });
-    } catch (error) {
-      console.error(`Failed to save anniversary photo for ${year}`, error);
-    } finally {
-      setUploadingYear(null);
-      uploadTargetYearRef.current = null;
-      if (uploadInputRef.current) uploadInputRef.current.value = '';
-    }
-  };
-
-  const getMemoryImage = (year: string, configuredImage: string) => {
-    const currentKey = `memory_${year}`;
-    const legacyKey = LEGACY_PHOTO_KEYS[year];
-
-    return photoData[currentKey] || (legacyKey ? photoData[legacyKey] : undefined) || configuredImage;
   };
 
   const answerYes = () => {
@@ -273,14 +155,6 @@ export default function App() {
 
   return (
     <div className="site-shell">
-      <input
-        ref={uploadInputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={handleMemoryUpload}
-      />
-
       <div className="ambient ambient-one" />
       <div className="ambient ambient-two" />
 
@@ -333,30 +207,15 @@ export default function App() {
           </div>
 
           <div className="timeline">
-            {anniversaryConfig.memories.map((memory, index) => {
-              const imageSrc = getMemoryImage(memory.year, memory.image);
-              const isUploading = uploadingYear === memory.year;
-
-              return (
+            {anniversaryConfig.memories.map((memory, index) => (
                 <article className="memory-card" key={memory.year}>
                   <div className="memory-photo">
                     <MemoryImage
-                      src={imageSrc}
+                      src={memory.image}
                       fallback={memory.fallbackImage}
                       alt={memory.title}
                     />
                     <span className="memory-number">{String(index + 1).padStart(2, '0')}</span>
-
-                    <button
-                      type="button"
-                      onClick={() => triggerMemoryUpload(memory.year)}
-                      disabled={isUploading}
-                      className="absolute right-4 top-4 z-10 inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-black/45 px-3 py-1.5 text-[11px] font-bold text-white shadow-lg backdrop-blur-md transition hover:bg-black/65 disabled:cursor-wait disabled:opacity-70"
-                      aria-label={`Đổi ảnh kỷ niệm năm ${memory.year}`}
-                    >
-                      <UploadCloud className="h-3.5 w-3.5" />
-                      <span>{isUploading ? 'Đang lưu...' : 'Đổi ảnh'}</span>
-                    </button>
                   </div>
 
                   <div className="memory-copy">
@@ -368,8 +227,7 @@ export default function App() {
                     <p>{memory.note}</p>
                   </div>
                 </article>
-              );
-            })}
+              ))}
           </div>
         </section>
 
