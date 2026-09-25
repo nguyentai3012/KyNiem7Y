@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "entities": {
+    "AnniversarySettings": {
+      "title": "AnniversarySettings",
+      "type": "object",
+      "description": "Global settings for the anniversary app (names, start date, love reasons)",
+      "properties": {
+        "boyName": { "type": "string" },
+        "herName": { "type": "string" },
+        "startDate": { "type": "string" },
+        "loveReason": { "type": "string" },
+        "passcode": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      }
+    },
+    "AnniversaryPhoto": {
+      "title": "AnniversaryPhoto",
+      "type": "object",
+      "description": "Photos and stories for each anniversary milestone",
+      "properties": {
+        "id": { "type": "string" },
+        "yearIndex": { "type": "number" },
+        "yearLabel": { "type": "string" },
+        "date": { "type": "string" },
+        "title": { "type": "string" },
+        "story": { "type": "string" },
+        "quote": { "type": "string" },
+        "photoData": { "type": "string" },
+        "fallbackUrl": { "type": "string" },
+        "order": { "type": "number" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "yearIndex", "title"]
+    }
+  },
+  "firestore": {
+    "/anniversary_settings/{docId}": {
+      "schema": "AnniversarySettings",
+      "description": "Stores anniversary couple info and settings"
+    },
+    "/anniversary_photos/{photoId}": {
+      "schema": "AnniversaryPhoto",
+      "description": "Stores photos and memories visible to both boyfriend and girlfriend"
+    }
+  }
+}

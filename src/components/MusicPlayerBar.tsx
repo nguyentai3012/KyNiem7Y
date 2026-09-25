@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Volume2, VolumeX, Play, Pause, Disc, Sparkles } from 'lucide-react';
+import { Volume2, VolumeX, Play, Pause, Disc, Sparkles, Mail } from 'lucide-react';
 import { audioService } from '../utils/audio.ts';
 
 interface MusicPlayerBarProps {
   petalsEnabled: boolean;
   onTogglePetals: () => void;
+  onReopenEnvelope?: () => void;
 }
 
 export const MusicPlayerBar: React.FC<MusicPlayerBarProps> = ({
   petalsEnabled,
   onTogglePetals,
+  onReopenEnvelope,
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -78,16 +80,27 @@ export const MusicPlayerBar: React.FC<MusicPlayerBarProps> = ({
           {isMuted ? <VolumeX className="w-3.5 h-3.5 text-stone-500" /> : <Volume2 className="w-3.5 h-3.5 text-rose-300" />}
         </button>
 
-        {/* Petals toggle button */}
+        {/* Petals & Hearts toggle button */}
         <button
           onClick={onTogglePetals}
           className={`p-2 rounded-full transition-colors ${
             petalsEnabled ? 'bg-rose-950 text-rose-300 border border-rose-500/40' : 'bg-stone-800 text-stone-500'
           }`}
-          title={petalsEnabled ? 'Tắt hiệu ứng cánh hoa bay' : 'Bật hiệu ứng cánh hoa bay'}
+          title={petalsEnabled ? 'Tắt hiệu ứng trái tim & cánh hoa bay' : 'Bật hiệu ứng trái tim & cánh hoa bay'}
         >
           <Sparkles className="w-3.5 h-3.5" />
         </button>
+
+        {/* Reopen Envelope Button */}
+        {onReopenEnvelope && (
+          <button
+            onClick={onReopenEnvelope}
+            className="p-2 rounded-full text-amber-300 hover:text-white bg-amber-950/60 hover:bg-amber-900/80 border border-amber-500/40 transition-colors"
+            title="Gấp lại phong thư kỷ niệm 25/09"
+          >
+            <Mail className="w-3.5 h-3.5" />
+          </button>
+        )}
       </div>
     </aside>
   );

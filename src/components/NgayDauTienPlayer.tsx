@@ -19,9 +19,13 @@ import { getCustomAudio, saveCustomAudio, clearCustomAudio } from '../utils/audi
 
 interface NgayDauTienPlayerProps {
   compact?: boolean;
+  allowUpload?: boolean;
 }
 
-export const NgayDauTienPlayer: React.FC<NgayDauTienPlayerProps> = ({ compact = false }) => {
+export const NgayDauTienPlayer: React.FC<NgayDauTienPlayerProps> = ({
+  compact = false,
+  allowUpload = false,
+}) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [hasCustomFile, setHasCustomFile] = useState(false);
@@ -305,51 +309,53 @@ export const NgayDauTienPlayer: React.FC<NgayDauTienPlayerProps> = ({ compact = 
         </div>
       </div>
 
-      {/* File Upload / Storage Status Ribbon */}
-      <div className="mt-5 pt-4 border-t border-stone-800/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-2 text-stone-400">
-          {hasCustomFile ? (
-            <span className="flex items-center gap-1.5 text-emerald-400">
-              <CheckCircle2 className="w-4 h-4" />
-              <span>Đang phát file: <strong className="font-mono text-white">{customFileName}</strong></span>
-            </span>
-          ) : (
-            <span className="flex items-center gap-1.5 text-stone-400">
-              <Sparkles className="w-3.5 h-3.5 text-rose-400" />
-              <span>Đang phát: Hộp nhạc chuông thánh thót điệp khúc "Ngày Đầu Tiên"</span>
-            </span>
-          )}
-        </div>
+      {/* File Upload / Storage Status Ribbon (Only shown if allowUpload is enabled, e.g. in Settings) */}
+      {allowUpload && (
+        <div className="mt-5 pt-4 border-t border-stone-800/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2 text-stone-400">
+            {hasCustomFile ? (
+              <span className="flex items-center gap-1.5 text-emerald-400">
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Đang phát file: <strong className="font-mono text-white">{customFileName}</strong></span>
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5 text-stone-400">
+                <Sparkles className="w-3.5 h-3.5 text-rose-400" />
+                <span>Đang phát: Hộp nhạc chuông thánh thót điệp khúc "Ngày Đầu Tiên"</span>
+              </span>
+            )}
+          </div>
 
-        <div className="flex items-center gap-2">
-          {/* Hidden File Input */}
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileUpload}
-            accept="audio/mp3,audio/mpeg,audio/*,.mp3,.m4a"
-            className="hidden"
-          />
+          <div className="flex items-center gap-2">
+            {/* Hidden File Input */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileUpload}
+              accept="audio/mp3,audio/mpeg,audio/*,.mp3,.m4a"
+              className="hidden"
+            />
 
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="px-3.5 py-1.5 rounded-full bg-rose-950/70 hover:bg-rose-900 border border-rose-500/40 text-rose-200 text-xs font-medium flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
-          >
-            <Upload className="w-3.5 h-3.5 text-rose-400" />
-            <span>{hasCustomFile ? 'Đổi file MP3 khác' : 'Nạp file Ngày Đầu Tiên.mp3'}</span>
-          </button>
-
-          {hasCustomFile && (
             <button
-              onClick={handleRemoveCustomAudio}
-              className="p-1.5 rounded-full text-stone-400 hover:text-rose-400 hover:bg-stone-800 transition-colors"
-              title="Xóa bài hát đã nạp và trở về hộp nhạc"
+              onClick={() => fileInputRef.current?.click()}
+              className="px-3.5 py-1.5 rounded-full bg-rose-950/70 hover:bg-rose-900 border border-rose-500/40 text-rose-200 text-xs font-medium flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              <Upload className="w-3.5 h-3.5 text-rose-400" />
+              <span>{hasCustomFile ? 'Đổi file MP3 khác' : 'Nạp file Ngày Đầu Tiên.mp3'}</span>
             </button>
-          )}
+
+            {hasCustomFile && (
+              <button
+                onClick={handleRemoveCustomAudio}
+                className="p-1.5 rounded-full text-stone-400 hover:text-rose-400 hover:bg-stone-800 transition-colors"
+                title="Xóa bài hát đã nạp và trở về hộp nhạc"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* MODAL: FULL LYRICS */}
       {showLyricsModal && (

@@ -1,0 +1,17 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Allow read/write for anniversary couple data
+    match /anniversary_settings/{docId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    match /anniversary_photos/{photoId} {
+      allow read: if true;
+      allow write: if true;
+    }
+  }
+}
